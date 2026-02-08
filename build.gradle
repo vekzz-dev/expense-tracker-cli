@@ -1,0 +1,66 @@
+plugins {
+    id 'java'
+    id 'application'
+    id("com.gradleup.shadow") version "9.3.1"
+}
+
+group = 'io.vekzz-dev'
+version = '1.0'
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
+
+application {
+    mainClass = 'io.vekzz_dev.expense_tracker.Main'
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    //CLI
+    implementation 'info.picocli:picocli:4.7.5'
+
+    //Money
+    implementation 'org.javamoney.moneta:moneta-core:1.4.4'
+
+    //Output
+    implementation 'de.vandermeer:asciitable:0.3.2'
+
+    //Logging
+    implementation 'org.slf4j:slf4j-api:2.0.17'
+    runtimeOnly 'ch.qos.logback:logback-classic:1.5.25'
+
+    //JDBC
+    implementation 'org.xerial:sqlite-jdbc:3.50.3.0'
+
+    //Test
+    testImplementation platform('org.junit:junit-bom:5.13.4')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+    testImplementation 'org.assertj:assertj-core:3.27.7'
+    testImplementation 'org.mockito:mockito-core:5.20.0'
+    testImplementation 'org.mockito:mockito-junit-jupiter:5.20.0'
+    testImplementation 'org.mockito:mockito-inline:5.20.0'
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+}
+
+shadowJar {
+    archiveClassifier.set('')
+    mergeServiceFiles()
+}
+
+test {
+    useJUnitPlatform()
+}
+
+tasks.build {
+    dependsOn shadowJar
+}
