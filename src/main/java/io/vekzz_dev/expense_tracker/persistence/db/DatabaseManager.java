@@ -4,11 +4,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
 
 public class DatabaseManager {
 
@@ -18,66 +18,27 @@ public class DatabaseManager {
             .resolve(".expense_tracker")
             .resolve("expenses.db");
 
-    private static Path customDbPath = null;
+    private static Path customDbPath;
 
     public static void setDbPath(Path path) {
         customDbPath = path;
     }
 
-    private static Path getDbPath() {
+    public static Path getDbPath() {
         return customDbPath != null ? customDbPath : DEFAULT_DB_PATH;
     }
 
     public static Connection getConnection() throws SQLException {
         Path dbPath = getDbPath();
+
         try {
-            if (Files.notExists(dbPath.getParent())) Files.createDirectories(dbPath.getParent());
-
-            Connection conn = DriverManager.getConnection("jdbc:sqlite:" + dbPath.toAbsolutePath());
-            initializeDatabase(conn);
-
-            return conn;
+            Files.createDirectories(dbPath.getParent());
 
         } catch (IOException e) {
             LOGGER.error("Could not create database directories: {}", dbPath.getParent(), e);
             throw new SQLException("Failed to connect to database", e);
         }
-    }
 
-    public static void initializeDatabase(Connection conn) throws SQLException {
-        // Verify if exists
-        DatabaseMetaData metaData = conn.getMetaData();
-
-        try (ResultSet rs = metaData.getTables(null, null,
-                "expenses", null)) {
-
-            if (!rs.next()) {
-                // Create tables
-                executeSQLScript(conn);
-                LOGGER.info("Database initialized at {}", getDbPath());
-            }
-        }
-    }
-
-    public static void executeSQLScript(Connection conn) throws SQLException {
-        try (InputStream is = DatabaseManager.class.getClassLoader()
-                .getResourceAsStream("expenses_schema.sql")) {
-
-            if (is == null) throw new SQLException("SQL script not found in resources");
-
-            String script = new String(is.readAllBytes(), StandardCharsets.UTF_8);
-            String[] statements = script.split(";");
-
-            try (Statement stmt = conn.createStatement()) {
-
-                for (String sql : statements) {
-                    sql = sql.trim();
-                    if (!sql.isEmpty()) stmt.execute(sql);
-                }
-            }
-        } catch (IOException e) {
-            LOGGER.error("Error while executing SQL schema", e);
-            throw new SQLException("Failed to execute SQL schema", e);
-        }
+        return DriverManager.getConnection("jdbc:sqlite:" + dbPath);
     }
 }
