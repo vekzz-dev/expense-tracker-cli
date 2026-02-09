@@ -2,8 +2,8 @@ package io.vekzz_dev.expense_tracker.persistence;
 
 import io.vekzz_dev.expense_tracker.persistence.db.DatabaseManager;
 import io.vekzz_dev.expense_tracker.persistence.db.DatabaseSetup;
-import io.vekzz_dev.expense_tracker.persistence.transactions.TransactionManager;
-import io.vekzz_dev.expense_tracker.persistence.transactions.TransactionalOperation;
+import io.vekzz_dev.expense_tracker.persistence.transaction.TransactionManager;
+import io.vekzz_dev.expense_tracker.persistence.transaction.TransactionalOperation;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

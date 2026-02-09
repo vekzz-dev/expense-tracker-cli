@@ -1,4 +1,4 @@
-package io.vekzz_dev.expense_tracker.persistence.transactions;
+package io.vekzz_dev.expense_tracker.persistence.transaction;
 
 import java.sql.Connection;
 import java.sql.SQLException;

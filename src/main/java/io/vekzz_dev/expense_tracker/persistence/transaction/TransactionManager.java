@@ -1,6 +1,6 @@
-package io.vekzz_dev.expense_tracker.persistence.transactions;
+package io.vekzz_dev.expense_tracker.persistence.transaction;
 
-import io.vekzz_dev.expense_tracker.exceptions.TransactionException;
+import io.vekzz_dev.expense_tracker.exception.TransactionException;
 import io.vekzz_dev.expense_tracker.persistence.db.DatabaseManager;
 
 import java.sql.Connection;

@@ -1,7 +1,7 @@
 package io.vekzz_dev.expense_tracker;
 
 import io.vekzz_dev.expense_tracker.persistence.db.DatabaseSetup;
-import io.vekzz_dev.expense_tracker.persistence.transactions.TransactionManager;
+import io.vekzz_dev.expense_tracker.persistence.transaction.TransactionManager;
 
 public class Main {
 
