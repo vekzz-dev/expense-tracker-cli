@@ -36,16 +36,18 @@
 ### Types and Data Structures
 - **Java 21**: Use records for immutable data carriers (`record Expense(long id, String description, Money amount)`)
 - **IDs**: Use `long` for database IDs
-- **Monetary values**: Use `org.javamoney.moneta.Money`
+- **Monetary values**: Use `org.javamoney.moneta.Money`, store as INTEGER cents in SQLite
 - **File paths**: Use `java.nio.file.Path` (not `String` or `java.io.File`)
-- **Dates**: Use ISO-8601 strings stored as TEXT in SQLite
+- **Dates**: Use `java.time.LocalDateTime` in Java, convert to ISO-8601 strings for SQLite
 - **Collections**: Prefer `List<T>` and `Map<K,V>` from `java.util`
+- **Local variables**: Use `var` for type inference, especially in try-with-resources
 
 ### Error Handling
 - Methods declare `throws SQLException` for database operations
 - Wrap `IOException` in `SQLException` with descriptive message before rethrowing
 - Always log errors with SLF4J, include context (paths, object states)
 - Catch specific exceptions, never catch `Exception` broadly
+- Use custom exceptions (DataAccessException, TransactionException) to wrap underlying errors
 
 ### Class Design
 - Prefer static utility methods where stateless (e.g., `DatabaseManager.getConnection()`)
@@ -57,7 +59,7 @@
 
 ### Testing Guidelines
 - Use JUnit 5 (`@Test`, `@BeforeEach`, `@AfterEach`)
-- Use AssertJ for assertions (`assertThat(...).isNotNull()`)
+- Use AssertJ for assertions with static imports (`import static org.assertj.core.api.Assertions.*`)
 - Use `@TempDir` from `org.junit.jupiter.api.io.TempDir` for filesystem tests
 - Test naming: `testMethodName_scenario_expected()`
 - Arrange-Act-Assert pattern in test methods
@@ -79,6 +81,27 @@
 - Check for table existence before creation (use `DatabaseMetaData.getTables()`)
 - Use SQLite INTEGER PRIMARY KEY AUTOINCREMENT for IDs
 - Store monetary amounts as INTEGER (cents) in SQLite, convert to Money in Java
+- Enable WAL mode for better concurrency (PRAGMA journal_mode=WAL)
+- SQL schema files: place in `src/main/resources`, use `DatabaseSetup.initialize()`
+
+### DAO Pattern
+- Define interfaces in `persistence.dao` package (e.g., `ExpenseDao`)
+- Implementations in `persistence.dao.jdbc` package (e.g., `JdbcExpenseDao`)
+- DAOs accept `Connection` in constructor
+- Use custom exceptions (DataAccessException) to wrap SQLException
+- Return `Optional<T>` for single-entity lookups that may not exist
+
+### Mapper Pattern
+- Create static mapper classes for database ↔ domain conversion (e.g., `ExpenseRowMapper`)
+- Place mappers in `persistence.mapper` package
+- Use utility mappers for conversions (e.g., `MoneyMapper.toMinor()`)
+- Mapers handle type conversions (String → LocalDateTime, Integer → Money)
+
+### Transaction Management
+- Use `TransactionManager` for transaction boundaries
+- Operations implement `TransactionalOperation<T>` functional interface
+- TransactionManager handles commit/rollback automatically
+- Pass `Connection` from TransactionManager to DAOs during operations
 
 ### Comments and Documentation
 - Minimal inline comments - code should be self-documenting
@@ -101,14 +124,6 @@
 - Keep subject line under 72 characters
 - Add detailed body if needed (what and why, not how)
 
-### CLI Command Patterns
-- Use picocli `@Command` annotation on command classes
-- Subcommands: extend from base command or use `@Command(name = "subcommand")`
-- Options: `@Option(names = {"-a", "--amount"})`
-- Parameters: `@Parameters(index = "0")`
-- Command classes: PascalCase with suffix `Command` (e.g., `AddExpenseCommand`)
-- Group commands by feature in subpackages
-
 ### Database Schema Conventions
 - Table names: lowercase, singular (`expense`, `category`, `tag`)
 - Columns: snake_case (`created_at`, `updated_at`)
@@ -127,16 +142,4 @@
 - Never log sensitive data (passwords, tokens, full financial data)
 - Include context in log messages (IDs, paths, operation names)
 
-### Configuration Handling
-- Store configuration in `~/.expense_tracker/config.properties` or environment variables
-- Use `java.util.Properties` for reading config files
-- Provide sensible defaults for all configuration options
-- Document required vs optional configuration
-- Validate configuration at startup, fail fast with clear error messages
 
-### Testing Patterns
-- Integration tests: use real SQLite in-memory database (`jdbc:sqlite::memory:`)
-- Unit tests: mock external dependencies with Mockito
-- Arrange-Act-Assert structure in test methods
-- Use `@BeforeEach` for test setup, `@AfterEach` for cleanup
-- Test both happy path and error scenarios
