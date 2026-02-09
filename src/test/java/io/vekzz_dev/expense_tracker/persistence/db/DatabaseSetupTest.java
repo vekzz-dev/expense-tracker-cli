@@ -1,7 +1,5 @@
 package io.vekzz_dev.expense_tracker.persistence.db;
 
-import io.vekzz_dev.expense_tracker.persistence.db.DatabaseManager;
-import io.vekzz_dev.expense_tracker.persistence.db.DatabaseSetup;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
