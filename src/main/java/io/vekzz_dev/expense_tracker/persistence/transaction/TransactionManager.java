@@ -30,4 +30,11 @@ public class TransactionManager {
             throw new TransactionException("Could not open transaction", e);
         }
     }
+
+    public void executeVoid(VoidTransactionalOperation operation) {
+        execute(conn -> {
+            operation.execute(conn);
+            return null;
+        });
+    }
 }
