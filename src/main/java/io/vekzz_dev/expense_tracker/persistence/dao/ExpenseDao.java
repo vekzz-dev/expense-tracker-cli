@@ -7,13 +7,13 @@ import java.util.Optional;
 
 public interface ExpenseDao {
 
-    long save(Expense expense);
+    long insert(Expense expense);
 
     Optional<Expense> findById(long id);
 
     List<Expense> findAll();
 
-    void update(Expense expense);
+    boolean update(Expense expense);
 
-    void delete(long id);
+    boolean delete(long id);
 }
