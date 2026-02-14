@@ -193,11 +193,12 @@ class JdbcExpenseDaoTest {
         LocalDateTime updatedAt = LocalDateTime.now();
         Expense updated = new Expense(id, "Espresso", Money.of(4.50, "USD"), now, updatedAt);
 
-        transactionManager.execute((TransactionalOperation<Void>) conn -> {
+        Boolean result = transactionManager.execute(conn -> {
             JdbcExpenseDao dao = new JdbcExpenseDao(conn);
-            dao.update(updated);
-            return null;
+            return dao.update(updated);
         });
+
+        assertThat(result).isTrue();
 
         Optional<Expense> found = transactionManager.execute(conn -> {
             JdbcExpenseDao dao = new JdbcExpenseDao(conn);
@@ -219,11 +220,12 @@ class JdbcExpenseDaoTest {
             return dao.save(expense);
         });
 
-        transactionManager.execute((TransactionalOperation<Void>) conn -> {
+        Boolean result = transactionManager.execute(conn -> {
             JdbcExpenseDao dao = new JdbcExpenseDao(conn);
-            dao.delete(id);
-            return null;
+            return dao.delete(id);
         });
+
+        assertThat(result).isTrue();
 
         Optional<Expense> found = transactionManager.execute(conn -> {
             JdbcExpenseDao dao = new JdbcExpenseDao(conn);
@@ -249,12 +251,12 @@ class JdbcExpenseDaoTest {
         });
         assertThat(found).isPresent();
 
-        transactionManager.execute((TransactionalOperation<Void>) conn -> {
+        Boolean updated = transactionManager.execute(conn -> {
             JdbcExpenseDao dao = new JdbcExpenseDao(conn);
-            Expense updated = new Expense(id, "Latte", Money.of(6.50, "USD"), now, LocalDateTime.now());
-            dao.update(updated);
-            return null;
+            Expense expense = new Expense(id, "Latte", Money.of(6.50, "USD"), now, LocalDateTime.now());
+            return dao.update(expense);
         });
+        assertThat(updated).isTrue();
 
         Optional<Expense> afterUpdate = transactionManager.execute(conn -> {
             JdbcExpenseDao dao = new JdbcExpenseDao(conn);
@@ -262,11 +264,11 @@ class JdbcExpenseDaoTest {
         });
         assertThat(afterUpdate.get().description()).isEqualTo("Latte");
 
-        transactionManager.execute((TransactionalOperation<Void>) conn -> {
+        Boolean deleted = transactionManager.execute(conn -> {
             JdbcExpenseDao dao = new JdbcExpenseDao(conn);
-            dao.delete(id);
-            return null;
+            return dao.delete(id);
         });
+        assertThat(deleted).isTrue();
 
         Optional<Expense> afterDelete = transactionManager.execute(conn -> {
             JdbcExpenseDao dao = new JdbcExpenseDao(conn);
