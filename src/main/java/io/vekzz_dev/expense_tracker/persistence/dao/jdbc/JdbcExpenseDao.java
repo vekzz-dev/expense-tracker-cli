@@ -1,7 +1,7 @@
 package io.vekzz_dev.expense_tracker.persistence.dao.jdbc;
 
 import io.vekzz_dev.expense_tracker.exception.DataAccessException;
-import io.vekzz_dev.expense_tracker.models.Expense;
+import io.vekzz_dev.expense_tracker.model.Expense;
 import io.vekzz_dev.expense_tracker.persistence.dao.ExpenseDao;
 import io.vekzz_dev.expense_tracker.persistence.mapper.ExpenseRowMapper;
 import io.vekzz_dev.expense_tracker.util.MoneyMapper;
