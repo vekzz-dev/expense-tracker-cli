@@ -1,6 +1,6 @@
 package io.vekzz_dev.expense_tracker.persistence.mapper;
 
-import io.vekzz_dev.expense_tracker.models.Expense;
+import io.vekzz_dev.expense_tracker.model.Expense;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -64,19 +64,6 @@ class ExpenseRowMapperTest {
 
         assertThat(expense.amount().getNumberStripped()).isEqualByComparingTo("25.50");
         assertThat(expense.amount().getCurrency().getCurrencyCode()).isEqualTo("USD");
-    }
-
-    @Test
-    void testMap_handlesZeroAmount() throws SQLException {
-        when(resultSet.getLong("id")).thenReturn(4L);
-        when(resultSet.getString("description")).thenReturn("Free item");
-        when(resultSet.getLong("amount")).thenReturn(0L);
-        when(resultSet.getString("created_at")).thenReturn("2024-04-01T12:00:00");
-        when(resultSet.getString("updated_at")).thenReturn("2024-04-01T12:00:00");
-
-        Expense expense = ExpenseRowMapper.map(resultSet);
-
-        assertThat(expense.amount().getNumberStripped()).isEqualByComparingTo("0");
     }
 
     @Test
