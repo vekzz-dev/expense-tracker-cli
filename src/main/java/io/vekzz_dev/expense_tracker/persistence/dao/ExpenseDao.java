@@ -1,6 +1,6 @@
 package io.vekzz_dev.expense_tracker.persistence.dao;
 
-import io.vekzz_dev.expense_tracker.models.Expense;
+import io.vekzz_dev.expense_tracker.model.Expense;
 
 import java.util.List;
 import java.util.Optional;

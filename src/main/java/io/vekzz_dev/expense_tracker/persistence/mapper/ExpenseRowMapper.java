@@ -1,6 +1,6 @@
 package io.vekzz_dev.expense_tracker.persistence.mapper;
 
-import io.vekzz_dev.expense_tracker.models.Expense;
+import io.vekzz_dev.expense_tracker.model.Expense;
 import org.javamoney.moneta.Money;
 
 import javax.money.Monetary;
