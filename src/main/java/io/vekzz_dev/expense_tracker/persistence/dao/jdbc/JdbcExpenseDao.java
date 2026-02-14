@@ -65,7 +65,7 @@ public class JdbcExpenseDao implements ExpenseDao {
     }
 
     @Override
-    public long save(Expense expense) {
+    public long insert(Expense expense) {
         String sql = "INSERT INTO expenses (description, amount, created_at, updated_at) VALUES (?, ?, ?, ?)";
 
         try (var stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
@@ -89,7 +89,7 @@ public class JdbcExpenseDao implements ExpenseDao {
     }
 
     @Override
-    public void update(Expense expense) {
+    public boolean update(Expense expense) {
         String sql = "UPDATE expenses SET description = ?, amount = ?, updated_at = ?  WHERE id = ?";
 
         try (var stmt = conn.prepareStatement(sql)) {
@@ -98,7 +98,8 @@ public class JdbcExpenseDao implements ExpenseDao {
             stmt.setString(3, expense.updatedAt().toString());
             stmt.setLong(4, expense.id());
 
-            stmt.executeUpdate();
+            int rows = stmt.executeUpdate();
+            return rows == 1;
 
         } catch (SQLException e) {
             LOGGER.error("Error while updating expense with id={}", expense.id(), e);
@@ -107,12 +108,13 @@ public class JdbcExpenseDao implements ExpenseDao {
     }
 
     @Override
-    public void delete(long id) {
+    public boolean delete(long id) {
         String sql = "DELETE FROM expenses WHERE id = ?";
 
         try (var stmt = conn.prepareStatement(sql)) {
             stmt.setLong(1, id);
-            stmt.executeUpdate();
+            int rows = stmt.executeUpdate();
+            return rows == 1;
 
         } catch (SQLException e) {
             LOGGER.error("Error while deleting expense with id={}", id, e);
