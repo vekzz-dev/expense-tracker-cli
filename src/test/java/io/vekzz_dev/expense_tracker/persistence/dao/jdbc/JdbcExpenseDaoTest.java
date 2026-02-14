@@ -309,4 +309,27 @@ class JdbcExpenseDaoTest {
 
         assertThat(thrown).isInstanceOf(io.vekzz_dev.expense_tracker.exception.TransactionException.class);
     }
+
+    @Test
+    void testUpdate_returnsFalse_whenNotFound() {
+        LocalDateTime now = LocalDateTime.now();
+        Expense expense = new Expense(9999L, "Coffee", Money.of(5.00, "USD"), now, now);
+
+        Boolean result = transactionManager.execute(conn -> {
+            JdbcExpenseDao dao = new JdbcExpenseDao(conn);
+            return dao.update(expense);
+        });
+
+        assertThat(result).isFalse();
+    }
+
+    @Test
+    void testDelete_returnsFalse_whenNotFound() {
+        Boolean result = transactionManager.execute(conn -> {
+            JdbcExpenseDao dao = new JdbcExpenseDao(conn);
+            return dao.delete(9999L);
+        });
+
+        assertThat(result).isFalse();
+    }
 }
