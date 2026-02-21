@@ -87,11 +87,11 @@ class TransactionManagerTest {
         Throwable thrown = catchThrowable(() -> transactionManager.execute(operation));
 
         assertThat(thrown).isInstanceOf(TransactionException.class)
-                .hasMessageContaining("Transaction failed");
+                .hasMessageContaining("Failed to execute transaction");
 
         try (Connection conn = DatabaseManager.getConnection();
-             Statement stmt = conn.createStatement();
-             ResultSet rs = stmt.executeQuery("SELECT COUNT(*) FROM test_table")) {
+              Statement stmt = conn.createStatement();
+              ResultSet rs = stmt.executeQuery("SELECT COUNT(*) FROM test_table")) {
 
             assertThat(rs.next()).isTrue();
             assertThat(rs.getInt(1)).isEqualTo(0);
@@ -115,11 +115,11 @@ class TransactionManagerTest {
         Throwable thrown = catchThrowable(() -> transactionManager.execute(operation));
 
         assertThat(thrown).isInstanceOf(TransactionException.class)
-                .hasMessageContaining("Transaction failed");
+                .hasMessageContaining("Unexpected runtime error during transaction");
 
         try (Connection conn = DatabaseManager.getConnection();
-             Statement stmt = conn.createStatement();
-             ResultSet rs = stmt.executeQuery("SELECT COUNT(*) FROM test_table")) {
+              Statement stmt = conn.createStatement();
+              ResultSet rs = stmt.executeQuery("SELECT COUNT(*) FROM test_table")) {
 
             assertThat(rs.next()).isTrue();
             assertThat(rs.getInt(1)).isEqualTo(0);
@@ -224,11 +224,11 @@ class TransactionManagerTest {
         Throwable thrown = catchThrowable(() -> transactionManager.executeVoid(operation));
 
         assertThat(thrown).isInstanceOf(TransactionException.class)
-                .hasMessageContaining("Transaction failed");
+                .hasMessageContaining("Failed to execute transaction");
 
         try (Connection conn = DatabaseManager.getConnection();
-             Statement stmt = conn.createStatement();
-             ResultSet rs = stmt.executeQuery("SELECT COUNT(*) FROM test_table")) {
+              Statement stmt = conn.createStatement();
+              ResultSet rs = stmt.executeQuery("SELECT COUNT(*) FROM test_table")) {
 
             assertThat(rs.next()).isTrue();
             assertThat(rs.getInt(1)).isEqualTo(0);
