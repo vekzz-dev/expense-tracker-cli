@@ -14,27 +14,27 @@ public record Expense(
 
     public Expense {
         if (id < 0) {
-            throw new InvalidExpenseException("Id cannot be negative");
+            throw new InvalidExpenseException("Error: ID cannot be negative");
         }
 
         if (description == null || description.isBlank()) {
-            throw new InvalidExpenseException("Description cannot be empty");
+            throw new InvalidExpenseException("Error: description cannot be empty");
         }
 
         if (amount == null) {
-            throw new InvalidExpenseException("Amount cannot be null");
+            throw new InvalidExpenseException("Error: amount cannot be null");
         }
 
         if (amount.isNegativeOrZero()) {
-            throw new InvalidExpenseException("Amount must be positive");
+            throw new InvalidExpenseException("Error: amount must be positive");
         }
 
         if (createdAt == null || updatedAt == null) {
-            throw new InvalidExpenseException("Dates cannot be null");
+            throw new InvalidExpenseException("Error: dates cannot be null");
         }
 
         if (updatedAt.isBefore(createdAt)) {
-            throw new InvalidExpenseException("updatedAt cannot be before createdAt");
+            throw new InvalidExpenseException("Error: updatedAt cannot be before createdAt");
         }
     }
 

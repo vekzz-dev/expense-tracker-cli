@@ -34,7 +34,7 @@ public final class PeriodValidator {
             return timeClass.cast(parser.apply(period));
 
         } catch (DateTimeParseException e) {
-            throw new InvalidPeriodTypeException("Invalid date format for: " + period);
+            throw new InvalidPeriodTypeException("Error: invalid date format for: " + period);
         }
     }
 }
