@@ -42,7 +42,15 @@ public record Expense(
         return new Expense(id, description, amount, createdAt, updatedAt);
     }
 
-    public Expense withUpdateValues(String description, Money amount, LocalDateTime updatedAt) {
+    public Expense withDescription(String description) {
+        return new Expense(id, description, amount, createdAt, updatedAt);
+    }
+
+    public Expense withAmount(Money amount) {
+        return new Expense(id, description, amount, createdAt, updatedAt);
+    }
+
+    public Expense withUpdatedAt(LocalDateTime updatedAt) {
         return new Expense(id, description, amount, createdAt, updatedAt);
     }
 }
