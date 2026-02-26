@@ -69,17 +69,17 @@ public class Main {
                 return 1;
 
             } else if (ex instanceof InfrastructureException) {
-                System.err.println("Error interno, revise el archivo de log en ~/.expense_tracker/expense-tracker.log");
+                System.err.println("Internal error, check the log file at ~/.expense_tracker/expense-tracker.log");
                 LOGGER.error("Infrastructure exception: {}", ex.getMessage(), ex);
                 return 1;
 
             } else if (ex instanceof RuntimeException) {
-                System.err.println("Error inesperado: " + ex.getMessage());
+                System.err.println("Unexpected error: " + ex.getMessage());
                 LOGGER.error("Unexpected exception: {}", ex.getMessage(), ex);
                 return 1;
             }
 
-            System.err.println("Error no esperado: " + ex.getMessage());
+            System.err.println("Unhandled error: " + ex.getMessage());
             LOGGER.error("Unhandled exception: {}", ex.getMessage(), ex);
             return 1;
         }
