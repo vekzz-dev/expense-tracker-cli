@@ -71,12 +71,12 @@ public class ExpenseService {
 
             var updatedExp = expenseDao.findById(id).orElseThrow(() -> new ExpenseNotFoundException(id));
 
-            if (description.isBlank() && amount.isBlank())
+            if ((description == null || description.isBlank()) && (amount == null || amount.isBlank()))
                 throw new ExpenseUpdateFailedException("Error: at least one description or amount must be provided");
 
-            if (!description.isBlank()) updatedExp = updatedExp.withDescription(description);
+            if (description != null && !description.isBlank()) updatedExp = updatedExp.withDescription(description);
 
-            if (!amount.isBlank()) updatedExp = updatedExp.withAmount(MoneyMapper.parseMoney(amount));
+            if (amount != null && !amount.isBlank()) updatedExp = updatedExp.withAmount(MoneyMapper.parseMoney(amount));
 
             var now = LocalDateTime.now();
             updatedExp = updatedExp.withUpdatedAt(now);
