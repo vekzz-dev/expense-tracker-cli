@@ -10,7 +10,10 @@ import java.time.format.DateTimeParseException;
 import java.util.Map;
 import java.util.function.Function;
 
-public class PeriodValidator {
+public final class PeriodValidator {
+
+    private PeriodValidator() {
+    }
 
     private static final Map<Class<?>, Function<String, ?>> DATE_PARSERS = Map.of(
             LocalDate.class, (Function<String, LocalDate>) s ->

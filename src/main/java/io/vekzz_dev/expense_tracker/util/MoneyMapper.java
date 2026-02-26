@@ -8,7 +8,10 @@ import javax.money.MonetaryAmount;
 import javax.money.UnknownCurrencyException;
 import java.math.BigDecimal;
 
-public class MoneyMapper {
+public final class MoneyMapper {
+
+    private MoneyMapper() {
+    }
 
     public static long toMinor(MonetaryAmount amount) {
         CurrencyUnit currency = amount.getCurrency();
