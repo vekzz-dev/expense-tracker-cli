@@ -1,6 +1,6 @@
 package io.vekzz_dev.expense_tracker.exception;
 
-public class DataAccessException extends RuntimeException {
+public class DataAccessException extends InfrastructureException {
 
     public DataAccessException(String message) {
         super(message);
