@@ -6,14 +6,7 @@ import picocli.CommandLine.Command;
         name = "exp",
         description = "Command to expenses",
         version = "1.0",
-        mixinStandardHelpOptions = true,
-        subcommands = {
-                ExpenseAddCommand.class,
-                ExpenseDeleteCommand.class,
-                ExpenseListCommand.class,
-                ExpenseUpdateCommand.class,
-                ExpenseSummaryCommand.class
-        }
+        mixinStandardHelpOptions = true
 )
 public class ExpenseCommand implements Runnable {
 
