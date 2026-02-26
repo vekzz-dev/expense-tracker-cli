@@ -69,16 +69,20 @@ public class ExpenseService {
         return tx.execute(conn -> {
             var expenseDao = factoryProvider.apply(conn).expenseDao();
 
-            var expense = expenseDao.findById(id).orElseThrow(() -> new ExpenseNotFoundException(id));
+            var updatedExp = expenseDao.findById(id).orElseThrow(() -> new ExpenseNotFoundException(id));
+
+            if (description.isBlank() && amount.isBlank())
+                throw new ExpenseUpdateFailedException("Error: at least one description or amount must be provided");
+
+            if (!description.isBlank()) updatedExp = updatedExp.withDescription(description);
+
+            if (!amount.isBlank()) updatedExp = updatedExp.withAmount(MoneyMapper.parseMoney(amount));
 
             var now = LocalDateTime.now();
-            var updatedExpense = expense
-                    .withDescription(description)
-                    .withAmount(MoneyMapper.parseMoney(amount))
-                    .withUpdatedAt(now);
+            updatedExp = updatedExp.withUpdatedAt(now);
 
-            if (!expenseDao.update(updatedExpense)) throw new ExpenseUpdateFailedException(id);
-            return updatedExpense;
+            if (!expenseDao.update(updatedExp)) throw new ExpenseUpdateFailedException(id);
+            return updatedExp;
         });
     }
 
