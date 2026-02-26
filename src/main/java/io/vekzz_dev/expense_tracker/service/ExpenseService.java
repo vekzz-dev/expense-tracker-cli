@@ -7,8 +7,8 @@ import io.vekzz_dev.expense_tracker.model.Expense;
 import io.vekzz_dev.expense_tracker.model.ExpenseSummary;
 import io.vekzz_dev.expense_tracker.persistence.factory.DaoFactory;
 import io.vekzz_dev.expense_tracker.persistence.transaction.TransactionManager;
+import io.vekzz_dev.expense_tracker.util.MoneyMapper;
 import io.vekzz_dev.expense_tracker.util.PeriodValidator;
-import org.javamoney.moneta.Money;
 
 import java.sql.Connection;
 import java.time.LocalDate;
@@ -50,9 +50,10 @@ public class ExpenseService {
         return expense.orElseThrow(() -> new ExpenseNotFoundException(id));
     }
 
-    public Expense add(String description, Money amount) {
+    public Expense add(String description, String amount) {
+        var amountMoney = MoneyMapper.parseMoney(amount);
         var now = LocalDateTime.now();
-        var expense = new Expense(0, description, amount, now, now);
+        var expense = new Expense(0, description, amountMoney, now, now);
 
         long generatedId = tx.execute(conn -> factoryProvider
                 .apply(conn)
@@ -64,19 +65,21 @@ public class ExpenseService {
         return expense.withId(generatedId);
     }
 
-    public Expense update(long id, String description, Money amount) {
+    public Expense update(long id, String description, String amount) {
         return tx.execute(conn -> {
-                    var expenseDao = factoryProvider.apply(conn).expenseDao();
-                    var expense = expenseDao.findById(id)
-                            .orElseThrow(() -> new ExpenseNotFoundException(id));
+            var expenseDao = factoryProvider.apply(conn).expenseDao();
 
-                    var now = LocalDateTime.now();
-                    var updatedExpense = expense.withUpdateValues(description, amount, now);
+            var expense = expenseDao.findById(id).orElseThrow(() -> new ExpenseNotFoundException(id));
 
-                    if (!expenseDao.update(updatedExpense)) throw new ExpenseUpdateFailedException(id);
-                    return updatedExpense;
-                }
-        );
+            var now = LocalDateTime.now();
+            var updatedExpense = expense
+                    .withDescription(description)
+                    .withAmount(MoneyMapper.parseMoney(amount))
+                    .withUpdatedAt(now);
+
+            if (!expenseDao.update(updatedExpense)) throw new ExpenseUpdateFailedException(id);
+            return updatedExpense;
+        });
     }
 
     public void delete(long id) {

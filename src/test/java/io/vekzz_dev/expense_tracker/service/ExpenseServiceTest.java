@@ -52,7 +52,7 @@ class ExpenseServiceTest {
     }
 
     private Expense insertTestExpense(String description, double amount) {
-        return expenseService.add(description, Money.of(amount, "USD"));
+        return expenseService.add(description, String.valueOf(amount));
     }
 
     @Test
@@ -93,7 +93,7 @@ class ExpenseServiceTest {
 
     @Test
     void testAdd_createsAndReturnsExpense() {
-        var result = expenseService.add("Lunch", Money.of(12.50, "USD"));
+        var result = expenseService.add("Lunch", "12.50");
 
         assertThat(result).isNotNull();
         assertThat(result.id()).isGreaterThan(0);
@@ -139,7 +139,7 @@ class ExpenseServiceTest {
 
         var failingService = new ExpenseService(tx, failingFactory, filterService, statisticsService);
 
-        var thrown = catchThrowable(() -> failingService.add("Test", Money.of(10, "USD")));
+        var thrown = catchThrowable(() -> failingService.add("Test", "10"));
 
         assertThat(thrown).isInstanceOf(ExpenseAddingFailedException.class);
     }
@@ -148,7 +148,7 @@ class ExpenseServiceTest {
     void testUpdate_updatesExistingExpense() {
         var original = insertTestExpense("Coffee", 5.00);
 
-        var result = expenseService.update(original.id(), "Espresso", Money.of(4.50, "USD"));
+        var result = expenseService.update(original.id(), "Espresso", "4.50");
 
         assertThat(result.description()).isEqualTo("Espresso");
         assertThat(result.amount().getNumberStripped()).isEqualByComparingTo("4.50");
@@ -157,7 +157,7 @@ class ExpenseServiceTest {
 
     @Test
     void testUpdate_throwsExpenseNotFoundException_whenNotFound() {
-        var thrown = catchThrowable(() -> expenseService.update(9999L, "Test", Money.of(10, "USD")));
+        var thrown = catchThrowable(() -> expenseService.update(9999L, "Test", "10"));
 
         assertThat(thrown).isInstanceOf(ExpenseNotFoundException.class);
     }
