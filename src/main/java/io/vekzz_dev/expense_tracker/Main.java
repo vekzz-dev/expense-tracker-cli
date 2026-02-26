@@ -1,11 +1,21 @@
 package io.vekzz_dev.expense_tracker;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import picocli.CommandLine;
+import picocli.CommandLine.ExecutionException;
+import picocli.CommandLine.IExecutionExceptionHandler;
+import picocli.CommandLine.IExitCodeExceptionMapper;
+import picocli.CommandLine.ParseResult;
+
 import io.vekzz_dev.expense_tracker.cli.command.ExpenseAddCommand;
 import io.vekzz_dev.expense_tracker.cli.command.ExpenseCommand;
 import io.vekzz_dev.expense_tracker.cli.command.ExpenseDeleteCommand;
 import io.vekzz_dev.expense_tracker.cli.command.ExpenseListCommand;
 import io.vekzz_dev.expense_tracker.cli.command.ExpenseSummaryCommand;
 import io.vekzz_dev.expense_tracker.cli.command.ExpenseUpdateCommand;
+import io.vekzz_dev.expense_tracker.exception.DomainException;
+import io.vekzz_dev.expense_tracker.exception.InfrastructureException;
 import io.vekzz_dev.expense_tracker.persistence.db.DatabaseSetup;
 import io.vekzz_dev.expense_tracker.persistence.factory.DaoFactory;
 import io.vekzz_dev.expense_tracker.persistence.factory.JdbcDaoFactory;
@@ -13,14 +23,16 @@ import io.vekzz_dev.expense_tracker.persistence.transaction.TransactionManager;
 import io.vekzz_dev.expense_tracker.service.ExpenseFilterService;
 import io.vekzz_dev.expense_tracker.service.ExpenseService;
 import io.vekzz_dev.expense_tracker.service.ExpenseStatisticsService;
-import picocli.CommandLine;
 
 import java.sql.Connection;
 import java.util.function.Function;
 
 public class Main {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(Main.class);
+
     public static void main(String[] args) {
+        LOGGER.info("Application starting");
         DatabaseSetup.initialize();
 
         TransactionManager tx = new TransactionManager();
@@ -42,8 +54,46 @@ public class Main {
                 .addSubcommand(expenseDeleteCommand)
                 .addSubcommand(expenseUpdateCommand)
                 .addSubcommand(expenseListCommand)
-                .addSubcommand(expenseSummaryCommand);
+                .addSubcommand(expenseSummaryCommand)
+                .setExecutionExceptionHandler(new CustomExceptionHandler())
+                .setExitCodeExceptionMapper(new CustomExceptionMapper());
 
         System.exit(cmdLine.execute(args));
+    }
+
+    private static class CustomExceptionHandler implements IExecutionExceptionHandler {
+        @Override
+        public int handleExecutionException(Exception ex, CommandLine commandLine, ParseResult parseResult) {
+            if (ex instanceof DomainException) {
+                System.err.println(ex.getMessage());
+                return 1;
+
+            } else if (ex instanceof InfrastructureException) {
+                System.err.println("Error interno, revise el archivo de log en ~/.expense_tracker/expense-tracker.log");
+                LOGGER.error("Infrastructure exception: {}", ex.getMessage(), ex);
+                return 1;
+
+            } else if (ex instanceof RuntimeException) {
+                System.err.println("Error inesperado: " + ex.getMessage());
+                LOGGER.error("Unexpected exception: {}", ex.getMessage(), ex);
+                return 1;
+            }
+
+            System.err.println("Error no esperado: " + ex.getMessage());
+            LOGGER.error("Unhandled exception: {}", ex.getMessage(), ex);
+            return 1;
+        }
+    }
+
+    private static class CustomExceptionMapper implements IExitCodeExceptionMapper {
+        @Override
+        public int getExitCode(Throwable exception) {
+            if (exception instanceof DomainException) {
+                return 1;
+            } else if (exception instanceof InfrastructureException) {
+                return 1;
+            }
+            return 1;
+        }
     }
 }
