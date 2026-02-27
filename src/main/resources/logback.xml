@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<configuration>
+<configuration debug="false">
+    <statusListener class="ch.qos.logback.core.status.NopStatusListener"/>
     <property name="USER_HOME" value="${user.home}"/>
     <property name="LOG_DIR" value="${USER_HOME}/.expense_tracker"/>
     <property name="LOG_FILE" value="${LOG_DIR}/expense-tracker.log"/>
