@@ -87,11 +87,11 @@ class TransactionManagerTest {
         Throwable thrown = catchThrowable(() -> transactionManager.execute(operation));
 
         assertThat(thrown).isInstanceOf(TransactionException.class)
-                .hasMessageContaining("Transaction failed");
+                .hasMessageContaining("Failed to execute transaction");
 
         try (Connection conn = DatabaseManager.getConnection();
-             Statement stmt = conn.createStatement();
-             ResultSet rs = stmt.executeQuery("SELECT COUNT(*) FROM test_table")) {
+              Statement stmt = conn.createStatement();
+              ResultSet rs = stmt.executeQuery("SELECT COUNT(*) FROM test_table")) {
 
             assertThat(rs.next()).isTrue();
             assertThat(rs.getInt(1)).isEqualTo(0);
@@ -115,11 +115,11 @@ class TransactionManagerTest {
         Throwable thrown = catchThrowable(() -> transactionManager.execute(operation));
 
         assertThat(thrown).isInstanceOf(TransactionException.class)
-                .hasMessageContaining("Transaction failed");
+                .hasMessageContaining("Unexpected runtime error during transaction");
 
         try (Connection conn = DatabaseManager.getConnection();
-             Statement stmt = conn.createStatement();
-             ResultSet rs = stmt.executeQuery("SELECT COUNT(*) FROM test_table")) {
+              Statement stmt = conn.createStatement();
+              ResultSet rs = stmt.executeQuery("SELECT COUNT(*) FROM test_table")) {
 
             assertThat(rs.next()).isTrue();
             assertThat(rs.getInt(1)).isEqualTo(0);
@@ -181,5 +181,70 @@ class TransactionManagerTest {
 
             assertThat(conn.getAutoCommit()).isFalse();
         }
+    }
+
+    @Test
+    void testExecuteVoid_executesOperation_whenSucceeds() throws SQLException {
+        try (Connection conn = DatabaseManager.getConnection();
+             Statement stmt = conn.createStatement()) {
+            stmt.execute("CREATE TABLE IF NOT EXISTS test_table (id INTEGER PRIMARY KEY)");
+        }
+
+        VoidTransactionalOperation operation = conn -> {
+            try (Statement stmt = conn.createStatement()) {
+                stmt.execute("INSERT INTO test_table DEFAULT VALUES");
+            }
+        };
+
+        transactionManager.executeVoid(operation);
+
+        try (Connection conn = DatabaseManager.getConnection();
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery("SELECT COUNT(*) FROM test_table")) {
+
+            assertThat(rs.next()).isTrue();
+            assertThat(rs.getInt(1)).isEqualTo(1);
+        }
+    }
+
+    @Test
+    void testExecuteVoid_rollsBack_onSQLException() throws SQLException {
+        try (Connection conn = DatabaseManager.getConnection();
+             Statement stmt = conn.createStatement()) {
+            stmt.execute("CREATE TABLE IF NOT EXISTS test_table (id INTEGER PRIMARY KEY)");
+        }
+
+        VoidTransactionalOperation operation = conn -> {
+            try (Statement stmt = conn.createStatement()) {
+                stmt.execute("INSERT INTO test_table DEFAULT VALUES");
+                throw new SQLException("Intentional error");
+            }
+        };
+
+        Throwable thrown = catchThrowable(() -> transactionManager.executeVoid(operation));
+
+        assertThat(thrown).isInstanceOf(TransactionException.class)
+                .hasMessageContaining("Failed to execute transaction");
+
+        try (Connection conn = DatabaseManager.getConnection();
+              Statement stmt = conn.createStatement();
+              ResultSet rs = stmt.executeQuery("SELECT COUNT(*) FROM test_table")) {
+
+            assertThat(rs.next()).isTrue();
+            assertThat(rs.getInt(1)).isEqualTo(0);
+        }
+    }
+
+    @Test
+    void testExecuteVoid_throwsTransactionException_onConnectionFailure() {
+        Path invalidPath = Path.of("/invalid/nonexistent/path/expenses.db");
+        DatabaseManager.setDbPath(invalidPath);
+
+        VoidTransactionalOperation operation = conn -> {};
+
+        Throwable thrown = catchThrowable(() -> transactionManager.executeVoid(operation));
+
+        assertThat(thrown).isInstanceOf(TransactionException.class)
+                .hasMessageContaining("Could not open transaction");
     }
 }

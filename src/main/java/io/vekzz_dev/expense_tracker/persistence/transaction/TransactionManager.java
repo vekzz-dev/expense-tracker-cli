@@ -1,5 +1,7 @@
 package io.vekzz_dev.expense_tracker.persistence.transaction;
 
+import io.vekzz_dev.expense_tracker.exception.DomainException;
+import io.vekzz_dev.expense_tracker.exception.InfrastructureException;
 import io.vekzz_dev.expense_tracker.exception.TransactionException;
 import io.vekzz_dev.expense_tracker.persistence.db.DatabaseManager;
 
@@ -19,9 +21,17 @@ public class TransactionManager {
                 conn.commit();
                 return result;
 
-            } catch (SQLException | RuntimeException e) {
+            } catch (DomainException | InfrastructureException e) {
                 conn.rollback();
-                throw new TransactionException("Transaction failed", e);
+                throw e;
+
+            } catch (SQLException e) {
+                conn.rollback();
+                throw new TransactionException("Failed to execute transaction", e);
+
+            } catch (RuntimeException e) {
+                conn.rollback();
+                throw new TransactionException("Unexpected runtime error during transaction", e);
 
             } finally {
                 conn.setAutoCommit(previousAutoCommit);
@@ -29,5 +39,12 @@ public class TransactionManager {
         } catch (SQLException e) {
             throw new TransactionException("Could not open transaction", e);
         }
+    }
+
+    public void executeVoid(VoidTransactionalOperation operation) {
+        execute(conn -> {
+            operation.execute(conn);
+            return null;
+        });
     }
 }

@@ -3,143 +3,147 @@
 ## Build Commands
 
 ### Gradle Commands
-- `./gradlew build` - Full build including tests
+- `./gradlew build` - Full build including tests and shadow JAR
 - `./gradlew test` - Run all tests
-- `./gradlew test --tests io.vekzz_dev.expense_tracker.ClassName` - Run tests for specific class
-- `./gradlew test --tests io.vekzz_dev.expense_tracker.ClassName.testMethodName` - Run single test
-- `./gradlew compileJava` - Compile main sources
-- `./gradlew compileTestJava` - Compile test sources
-- `./gradlew classes` - Compile main and create classes
-- `./gradlew shadowJar` - Create fat JAR with all dependencies
+- `./gradlew test --tests "io.vekzz_dev.expense_tracker.ClassName"` - Run tests for specific class
+- `./gradlew test --tests "io.vekzz_dev.expense_tracker.ClassName.testMethodName"` - Run single test method
+- `./gradlew compileJava` - Compile main sources only
+- `./gradlew shadowJar` - Create fat JAR with all dependencies (output: `build/libs/*.jar`)
 - `./gradlew clean` - Clean build artifacts
+- `./gradlew run` - Run the application (via `application` plugin)
+- `./gradlew run --args="add --description 'Coffee' --amount 5.00"` - Run with CLI args
+
+## Project Architecture
+
+### Layered Architecture
+```
+cli/           → Command-line interface (Picocli commands)
+service/       → Business logic layer (ExpenseService, ExpenseFilterService)
+model/         → Domain models (Expense, ExpenseStatistics, ExpenseSummary)
+persistence/   → Data access layer
+  ├── dao/     → DAO interfaces
+  ├── dao/jdbc/→ JDBC implementations
+  ├── mapper/  → Row mappers for DB ↔ Domain conversion
+  ├── factory/ → DAO factories (DaoFactory, JdbcDaoFactory)
+  ├── db/      → Database management (DatabaseManager, DatabaseSetup)
+  └── transaction/ → Transaction management
+util/          → Utility classes (PeriodValidator, MoneyMapper)
+exception/     → Custom exceptions
+```
 
 ## Code Style Guidelines
 
 ### Package Structure
 - Base package: `io.vekzz_dev.expense_tracker`
-- Use subpackages by feature: `models`, `storage`, `services`, `cli`, etc.
+- Subpackages by layer: `model`, `service`, `persistence`, `util`, `exception`, `cli`
 - Package names: lowercase, underscore separators (`io.vekzz_dev`)
 
 ### Imports
 - Group imports: third-party libraries first, then Java stdlib
 - Avoid wildcard imports except for `java.util.*` and `org.junit.jupiter.api.*`
 - Use explicit imports for `java.nio.file`, `java.sql`, `java.io`
+- Static imports for AssertJ: `import static org.assertj.core.api.Assertions.*`
 
 ### Naming Conventions
-- **Classes**: PascalCase (`DatabaseManager`, `Expense`, `Main`)
+- **Classes**: PascalCase (`DatabaseManager`, `Expense`, `JdbcExpenseDao`)
+- **Interfaces**: PascalCase, no prefix (`ExpenseDao`, `DaoFactory`)
+- **Implementations**: Prefix with technology (`JdbcExpenseDao`)
 - **Methods**: camelCase (`getConnection`, `initializeDatabase`)
 - **Constants**: UPPER_SNAKE_CASE (`DB_PATH`, `LOGGER`)
 - **Variables**: camelCase (`dbPath`, `customDbPath`)
-- **Private methods**: camelCase, descriptive (`getDbPath`, `executeSQLScript`)
-- **Test methods**: `testMethodName_scenario()` (`testGetConnection_createsDatabaseDirectory()`)
+- **Test methods**: `testMethodName_scenario_expected()` (`testInsert_insertsExpenseAndReturnsId()`)
 
 ### Types and Data Structures
 - **Java 21**: Use records for immutable data carriers (`record Expense(long id, String description, Money amount)`)
 - **IDs**: Use `long` for database IDs
 - **Monetary values**: Use `org.javamoney.moneta.Money`, store as INTEGER cents in SQLite
 - **File paths**: Use `java.nio.file.Path` (not `String` or `java.io.File`)
-- **Dates**: Use `java.time.LocalDateTime` in Java, convert to ISO-8601 strings for SQLite
-- **Collections**: Prefer `List<T>` and `Map<K,V>` from `java.util`
+- **Dates/Times**: Use `java.time.LocalDateTime`, `LocalDate`, `YearMonth`, `Year`
+- **Collections**: Prefer `List<T>`, `Map<K,V>`, `Optional<T>` from `java.util`
 - **Local variables**: Use `var` for type inference, especially in try-with-resources
 
 ### Error Handling
-- Methods declare `throws SQLException` for database operations
-- Wrap `IOException` in `SQLException` with descriptive message before rethrowing
-- Always log errors with SLF4J, include context (paths, object states)
-- Catch specific exceptions, never catch `Exception` broadly
-- Use custom exceptions (DataAccessException, TransactionException) to wrap underlying errors
+
+#### Exception Hierarchy
+- `DomainException` (abstract) → Business rule violations
+- `InfrastructureException` (abstract) → Technical failures
+- Custom exceptions: `ExpenseNotFoundException`, `InvalidExpenseException`, `InvalidPeriodTypeException`, `ExpenseAddingFailedException`, `ExpenseUpdateFailedException` extend `DomainException`
+- `TransactionException`, `DataAccessException` extend `InfrastructureException`
+
+#### Guidelines
+- Never catch `Exception` broadly - catch specific exceptions
+- Always log errors with SLF4J, include context (paths, IDs, states)
+- TransactionManager re-throws `DomainException` and `InfrastructureException` without wrapping
 
 ### Class Design
-- Prefer static utility methods where stateless (e.g., `DatabaseManager.getConnection()`)
+- Prefer static utility methods where stateless (`DatabaseManager.getConnection()`)
 - Use package-private (no modifier) for methods used in testing
 - Private methods for implementation details
-- Keep classes focused on single responsibility
-- DatabaseManager: static factory methods for connections
-- Records: immutable data models
+- Single responsibility per class
+- Records for immutable data models with validation in compact constructor
 
 ### Testing Guidelines
-- Use JUnit 5 (`@Test`, `@BeforeEach`, `@AfterEach`)
-- Use AssertJ for assertions with static imports (`import static org.assertj.core.api.Assertions.*`)
-- Use `@TempDir` from `org.junit.jupiter.api.io.TempDir` for filesystem tests
-- Test naming: `testMethodName_scenario_expected()`
-- Arrange-Act-Assert pattern in test methods
-- Use `catchThrowable(() -> methodCall())` for exception testing
-- Group related tests in test classes by feature
-- Reset static state in `@AfterEach` (e.g., `DatabaseManager.setDbPath(null)`)
+- JUnit 5: `@Test`, `@BeforeEach`, `@AfterEach`
+- AssertJ for assertions: `assertThat(result).isEqualTo(expected)`
+- `@TempDir` for filesystem tests: `Path tempDir`
+- `catchThrowable(() -> methodCall())` for exception testing
+- Reset static state in `@AfterEach`: `DatabaseManager.setDbPath(null)`
+- Arrange-Act-Assert pattern; integration tests use real database with `@TempDir`
 
 ### Code Organization
-- Place static fields at top of class
-- Public methods before private methods
-- Use blank lines between method definitions
-- Keep methods under 20 lines when possible
+- Static fields at top of class; public methods before private methods
+- Blank lines between method definitions; methods under 20 lines when possible
 - Extract complex logic to private helper methods
-- Comment in Spanish as per project language preference
+- Comments in Spanish for complex business logic
 
-### Database Operations
-- Always close `Connection`, `Statement`, `ResultSet` with try-with-resources
-- Use `PreparedStatement` for parameterized queries
-- Check for table existence before creation (use `DatabaseMetaData.getTables()`)
-- Use SQLite INTEGER PRIMARY KEY AUTOINCREMENT for IDs
-- Store monetary amounts as INTEGER (cents) in SQLite, convert to Money in Java
-- Enable WAL mode for better concurrency (PRAGMA journal_mode=WAL)
-- SQL schema files: place in `src/main/resources`, use `DatabaseSetup.initialize()`
+## Database Operations
+
+### Connection Management
+- `DatabaseManager.getConnection()` - Static factory for connections
+- Always use try-with-resources for `Connection`, `Statement`, `ResultSet`
+- Enable WAL mode: `PRAGMA journal_mode=WAL`
 
 ### DAO Pattern
-- Define interfaces in `persistence.dao` package (e.g., `ExpenseDao`)
-- Implementations in `persistence.dao.jdbc` package (e.g., `JdbcExpenseDao`)
+- Interfaces in `persistence.dao` package
+- Implementations in `persistence.dao.jdbc` package
 - DAOs accept `Connection` in constructor
-- Use custom exceptions (DataAccessException) to wrap SQLException
-- Return `Optional<T>` for single-entity lookups that may not exist
+- Return `Optional<T>` for single-entity lookups
 
 ### Mapper Pattern
-- Create static mapper classes for database ↔ domain conversion (e.g., `ExpenseRowMapper`)
-- Place mappers in `persistence.mapper` package
-- Use utility mappers for conversions (e.g., `MoneyMapper.toMinor()`)
-- Mapers handle type conversions (String → LocalDateTime, Integer → Money)
+- Static mapper classes for DB ↔ Domain conversion
+- `ExpenseRowMapper` for result set mapping
+- `MoneyMapper.toMinor()` for Money → cents conversion
 
 ### Transaction Management
-- Use `TransactionManager` for transaction boundaries
-- Operations implement `TransactionalOperation<T>` functional interface
-- TransactionManager handles commit/rollback automatically
-- Pass `Connection` from TransactionManager to DAOs during operations
+```java
+tx.execute(conn -> {
+    var dao = factoryProvider.apply(conn).expenseDao();
+    return dao.findById(id);
+});
+```
+- `TransactionManager` handles commit/rollback automatically
+- Domain/Infrastructure exceptions propagate without wrapping
+- Pass `Connection` from TransactionManager to DAOs
 
-### Comments and Documentation
-- Minimal inline comments - code should be self-documenting
-- Use descriptive method and variable names
-- Comment complex business logic in Spanish
-- Javadoc not required for simple public methods
-- Package-info.java can describe package purpose
+### Schema Conventions
+- Table names: lowercase, singular (`expense`); Columns: snake_case (`created_at`)
+- ID: `id INTEGER PRIMARY KEY AUTOINCREMENT`
+- Timestamps: TEXT in ISO-8601 format; Money: INTEGER (cents)
 
-### Dependencies (Available for Use)
-- **CLI**: `info.picocli:picocli` - Command line parsing
-- **Money**: `org.javamoney.moneta:moneta-core` - Monetary operations
-- **Output**: `de.vandermeer:asciitable` - ASCII table formatting
-- **Logging**: `org.slf4j` with `logback-classic` - Logging
-- **Database**: `org.xerial:sqlite-jdbc` - SQLite JDBC driver
+## Logging Guidelines
+- SLF4J with parameterized logging: `LOGGER.info("Processing expense: {}", id)`
+- Levels: ERROR (system failures), WARN (recoverable), INFO (business events), DEBUG (flow details)
+- Never log sensitive data
+
+## Dependencies
+- **CLI**: `info.picocli:picocli:4.7.5`
+- **Money**: `org.javamoney.moneta:moneta-core:1.4.4`
+- **Output**: `de.vandermeer:asciitable:0.3.2`
+- **Logging**: `org.slf4j:slf4j-api` + `ch.qos.logback:logback-classic`
+- **Database**: `org.xerial:sqlite-jdbc:3.50.3.0`
 - **Testing**: `junit-jupiter`, `assertj-core`, `mockito-core`, `mockito-junit-jupiter`
 
-### Git Commit Conventions
-- Use Conventional Commits format: `type(scope): description`
+## Git Commit Conventions
+- Format: `type(scope): description`
 - Types: `feat`, `fix`, `refactor`, `test`, `chore`, `build`, `docs`
-- Keep subject line under 72 characters
-- Add detailed body if needed (what and why, not how)
-
-### Database Schema Conventions
-- Table names: lowercase, singular (`expense`, `category`, `tag`)
-- Columns: snake_case (`created_at`, `updated_at`)
-- ID column: `id INTEGER PRIMARY KEY AUTOINCREMENT`
-- Timestamps: store as TEXT in ISO-8601 format (`2024-02-08T14:30:00Z`)
-- Money: store as INTEGER (cents) to avoid floating-point issues
-- Foreign keys: reference table name + `_id` (`category_id`)
-
-### Logging Guidelines
-- Use SLF4J with parameterized logging: `LOGGER.info("Processing expense: {}", expense)`
-- Log levels:
-  - ERROR: System failures that prevent operation (database connection, file permissions)
-  - WARN: Recoverable issues (missing optional config, deprecated usage)
-  - INFO: Important business events (expense created, database initialized)
-  - DEBUG: Detailed execution flow (method entry/exit, query details)
-- Never log sensitive data (passwords, tokens, full financial data)
-- Include context in log messages (IDs, paths, operation names)
-
-
+- Subject under 72 characters

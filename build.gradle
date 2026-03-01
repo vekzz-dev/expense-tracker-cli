@@ -25,6 +25,9 @@ dependencies {
     //CLI
     implementation 'info.picocli:picocli:4.7.5'
 
+    //Test - Picocli testing support
+    testImplementation 'info.picocli:picocli-codegen:4.7.5'
+
     //Money
     implementation 'org.javamoney.moneta:moneta-core:1.4.4'
 
@@ -33,10 +36,11 @@ dependencies {
 
     //Logging
     implementation 'org.slf4j:slf4j-api:2.0.17'
+    implementation 'org.slf4j:jul-to-slf4j:2.0.17'
     runtimeOnly 'ch.qos.logback:logback-classic:1.5.25'
 
     //JDBC
-    implementation 'org.xerial:sqlite-jdbc:3.50.3.0'
+    implementation 'org.xerial:sqlite-jdbc:3.51.2.0'
 
     //Test
     testImplementation platform('org.junit:junit-bom:5.13.4')

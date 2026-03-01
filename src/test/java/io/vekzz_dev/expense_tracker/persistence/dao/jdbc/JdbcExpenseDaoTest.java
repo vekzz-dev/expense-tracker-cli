@@ -1,6 +1,6 @@
 package io.vekzz_dev.expense_tracker.persistence.dao.jdbc;
 
-import io.vekzz_dev.expense_tracker.models.Expense;
+import io.vekzz_dev.expense_tracker.model.Expense;
 import io.vekzz_dev.expense_tracker.persistence.db.DatabaseManager;
 import io.vekzz_dev.expense_tracker.persistence.db.DatabaseSetup;
 import io.vekzz_dev.expense_tracker.persistence.transaction.TransactionManager;
@@ -44,7 +44,7 @@ class JdbcExpenseDaoTest {
     }
 
     @Test
-    void testSave_insertsExpenseAndReturnsId() {
+    void testInsert_insertsExpenseAndReturnsId() {
         LocalDateTime now = LocalDateTime.now();
         Expense expense = new Expense(
                 0L,
@@ -56,7 +56,7 @@ class JdbcExpenseDaoTest {
 
         Long id = transactionManager.execute(conn -> {
             JdbcExpenseDao dao = new JdbcExpenseDao(conn);
-            return dao.save(expense);
+            return dao.insert(expense);
         });
 
         assertThat(id).isGreaterThan(0);
@@ -72,19 +72,19 @@ class JdbcExpenseDaoTest {
     }
 
     @Test
-    void testSave_assignsDifferentIdsToMultipleExpenses() {
+    void testInsert_assignsDifferentIdsToMultipleExpenses() {
         LocalDateTime now = LocalDateTime.now();
         Expense expense1 = new Expense(0L, "Coffee", Money.of(5.00, "USD"), now, now);
         Expense expense2 = new Expense(0L, "Lunch", Money.of(12.50, "USD"), now, now);
 
         Long id1 = transactionManager.execute(conn -> {
             JdbcExpenseDao dao = new JdbcExpenseDao(conn);
-            return dao.save(expense1);
+            return dao.insert(expense1);
         });
 
         Long id2 = transactionManager.execute(conn -> {
             JdbcExpenseDao dao = new JdbcExpenseDao(conn);
-            return dao.save(expense2);
+            return dao.insert(expense2);
         });
 
         assertThat(id1).isNotEqualTo(id2);
@@ -92,7 +92,7 @@ class JdbcExpenseDaoTest {
     }
 
     @Test
-    void testSave_storesCorrectValues() {
+    void testInsert_storesCorrectValues() {
         LocalDateTime now = LocalDateTime.now();
         Expense expense = new Expense(
                 0L,
@@ -104,7 +104,7 @@ class JdbcExpenseDaoTest {
 
         Long id = transactionManager.execute(conn -> {
             JdbcExpenseDao dao = new JdbcExpenseDao(conn);
-            return dao.save(expense);
+            return dao.insert(expense);
         });
 
         String description = transactionManager.execute(conn -> {
@@ -124,7 +124,7 @@ class JdbcExpenseDaoTest {
 
         Long id = transactionManager.execute(conn -> {
             JdbcExpenseDao dao = new JdbcExpenseDao(conn);
-            return dao.save(expense);
+            return dao.insert(expense);
         });
 
         Optional<Expense> found = transactionManager.execute(conn -> {
@@ -156,8 +156,8 @@ class JdbcExpenseDaoTest {
 
         transactionManager.execute((TransactionalOperation<Void>) conn -> {
             JdbcExpenseDao dao = new JdbcExpenseDao(conn);
-            dao.save(expense1);
-            dao.save(expense2);
+            dao.insert(expense1);
+            dao.insert(expense2);
             return null;
         });
 
@@ -187,17 +187,18 @@ class JdbcExpenseDaoTest {
 
         Long id = transactionManager.execute(conn -> {
             JdbcExpenseDao dao = new JdbcExpenseDao(conn);
-            return dao.save(expense);
+            return dao.insert(expense);
         });
 
         LocalDateTime updatedAt = LocalDateTime.now();
         Expense updated = new Expense(id, "Espresso", Money.of(4.50, "USD"), now, updatedAt);
 
-        transactionManager.execute((TransactionalOperation<Void>) conn -> {
+        Boolean result = transactionManager.execute(conn -> {
             JdbcExpenseDao dao = new JdbcExpenseDao(conn);
-            dao.update(updated);
-            return null;
+            return dao.update(updated);
         });
+
+        assertThat(result).isTrue();
 
         Optional<Expense> found = transactionManager.execute(conn -> {
             JdbcExpenseDao dao = new JdbcExpenseDao(conn);
@@ -216,14 +217,15 @@ class JdbcExpenseDaoTest {
 
         Long id = transactionManager.execute(conn -> {
             JdbcExpenseDao dao = new JdbcExpenseDao(conn);
-            return dao.save(expense);
+            return dao.insert(expense);
         });
 
-        transactionManager.execute((TransactionalOperation<Void>) conn -> {
+        Boolean result = transactionManager.execute(conn -> {
             JdbcExpenseDao dao = new JdbcExpenseDao(conn);
-            dao.delete(id);
-            return null;
+            return dao.delete(id);
         });
+
+        assertThat(result).isTrue();
 
         Optional<Expense> found = transactionManager.execute(conn -> {
             JdbcExpenseDao dao = new JdbcExpenseDao(conn);
@@ -240,7 +242,7 @@ class JdbcExpenseDaoTest {
         Long id = transactionManager.execute(conn -> {
             JdbcExpenseDao dao = new JdbcExpenseDao(conn);
             Expense expense = new Expense(0L, "Coffee", Money.of(5.00, "USD"), now, now);
-            return dao.save(expense);
+            return dao.insert(expense);
         });
 
         Optional<Expense> found = transactionManager.execute(conn -> {
@@ -249,12 +251,12 @@ class JdbcExpenseDaoTest {
         });
         assertThat(found).isPresent();
 
-        transactionManager.execute((TransactionalOperation<Void>) conn -> {
+        Boolean updated = transactionManager.execute(conn -> {
             JdbcExpenseDao dao = new JdbcExpenseDao(conn);
-            Expense updated = new Expense(id, "Latte", Money.of(6.50, "USD"), now, LocalDateTime.now());
-            dao.update(updated);
-            return null;
+            Expense expense = new Expense(id, "Latte", Money.of(6.50, "USD"), now, LocalDateTime.now());
+            return dao.update(expense);
         });
+        assertThat(updated).isTrue();
 
         Optional<Expense> afterUpdate = transactionManager.execute(conn -> {
             JdbcExpenseDao dao = new JdbcExpenseDao(conn);
@@ -262,11 +264,11 @@ class JdbcExpenseDaoTest {
         });
         assertThat(afterUpdate.get().description()).isEqualTo("Latte");
 
-        transactionManager.execute((TransactionalOperation<Void>) conn -> {
+        Boolean deleted = transactionManager.execute(conn -> {
             JdbcExpenseDao dao = new JdbcExpenseDao(conn);
-            dao.delete(id);
-            return null;
+            return dao.delete(id);
         });
+        assertThat(deleted).isTrue();
 
         Optional<Expense> afterDelete = transactionManager.execute(conn -> {
             JdbcExpenseDao dao = new JdbcExpenseDao(conn);
@@ -276,7 +278,7 @@ class JdbcExpenseDaoTest {
     }
 
     @Test
-    void testSave_throwsDataAccessException_onDatabaseError() {
+    void testInsert_throwsDataAccessException_onDatabaseError() {
         assumeTrue(System.getProperty("os.name").toLowerCase().contains("linux") ||
                         System.getProperty("os.name").toLowerCase().contains("mac"),
                 "PosixFilePermissions only supported on Unix-like systems");
@@ -300,11 +302,34 @@ class JdbcExpenseDaoTest {
         Throwable thrown = catchThrowable(() -> {
             transactionManager.execute((TransactionalOperation<Void>) conn -> {
                 JdbcExpenseDao dao = new JdbcExpenseDao(conn);
-                dao.save(expense);
+                dao.insert(expense);
                 return null;
             });
         });
 
         assertThat(thrown).isInstanceOf(io.vekzz_dev.expense_tracker.exception.TransactionException.class);
+    }
+
+    @Test
+    void testUpdate_returnsFalse_whenNotFound() {
+        LocalDateTime now = LocalDateTime.now();
+        Expense expense = new Expense(9999L, "Coffee", Money.of(5.00, "USD"), now, now);
+
+        Boolean result = transactionManager.execute(conn -> {
+            JdbcExpenseDao dao = new JdbcExpenseDao(conn);
+            return dao.update(expense);
+        });
+
+        assertThat(result).isFalse();
+    }
+
+    @Test
+    void testDelete_returnsFalse_whenNotFound() {
+        Boolean result = transactionManager.execute(conn -> {
+            JdbcExpenseDao dao = new JdbcExpenseDao(conn);
+            return dao.delete(9999L);
+        });
+
+        assertThat(result).isFalse();
     }
 }
