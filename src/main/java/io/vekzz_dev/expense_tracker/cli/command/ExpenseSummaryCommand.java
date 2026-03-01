@@ -73,6 +73,7 @@ public class ExpenseSummaryCommand implements Runnable {
             return;
         }
 
+        System.out.println(summary.description());
         System.out.println(AsciiTableFormatter.buildSummaryTable(summary));
     }
 }
