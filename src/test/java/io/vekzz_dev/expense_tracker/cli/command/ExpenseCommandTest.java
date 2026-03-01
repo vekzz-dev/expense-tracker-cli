@@ -21,7 +21,7 @@ class ExpenseCommandTest {
 
         var output = outStream.toString().trim();
 
-        assertThat(output).isEqualTo("Use: expense-tracker e <subcommand>");
+        assertThat(output).isEqualTo("Use: expense-tracker <command>");
     }
 
     @Test

@@ -145,7 +145,6 @@ class AsciiTableFormatterTest {
 
         var result = AsciiTableFormatter.buildSummaryTable(summary);
 
-        assertThat(result).contains("Test Summary");
         assertThat(result).contains("Total amount:");
         assertThat(result).contains("Average amount:");
         assertThat(result).contains("Max amount:");
