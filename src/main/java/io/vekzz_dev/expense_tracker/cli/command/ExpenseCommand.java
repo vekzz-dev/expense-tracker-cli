@@ -12,6 +12,6 @@ public class ExpenseCommand implements Runnable {
 
     @Override
     public void run() {
-        System.out.println("Use: expense-tracker e <subcommand>");
+        System.out.println("Use: expense-tracker <command>");
     }
 }
