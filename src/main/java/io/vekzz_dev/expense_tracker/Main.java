@@ -1,19 +1,6 @@
 package io.vekzz_dev.expense_tracker;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import picocli.CommandLine;
-import picocli.CommandLine.ExecutionException;
-import picocli.CommandLine.IExecutionExceptionHandler;
-import picocli.CommandLine.IExitCodeExceptionMapper;
-import picocli.CommandLine.ParseResult;
-
-import io.vekzz_dev.expense_tracker.cli.command.ExpenseAddCommand;
-import io.vekzz_dev.expense_tracker.cli.command.ExpenseCommand;
-import io.vekzz_dev.expense_tracker.cli.command.ExpenseDeleteCommand;
-import io.vekzz_dev.expense_tracker.cli.command.ExpenseListCommand;
-import io.vekzz_dev.expense_tracker.cli.command.ExpenseSummaryCommand;
-import io.vekzz_dev.expense_tracker.cli.command.ExpenseUpdateCommand;
+import io.vekzz_dev.expense_tracker.cli.command.*;
 import io.vekzz_dev.expense_tracker.exception.DomainException;
 import io.vekzz_dev.expense_tracker.exception.InfrastructureException;
 import io.vekzz_dev.expense_tracker.persistence.db.DatabaseSetup;
@@ -23,15 +10,27 @@ import io.vekzz_dev.expense_tracker.persistence.transaction.TransactionManager;
 import io.vekzz_dev.expense_tracker.service.ExpenseFilterService;
 import io.vekzz_dev.expense_tracker.service.ExpenseService;
 import io.vekzz_dev.expense_tracker.service.ExpenseStatisticsService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.bridge.SLF4JBridgeHandler;
+import picocli.CommandLine;
+import picocli.CommandLine.IExecutionExceptionHandler;
+import picocli.CommandLine.IExitCodeExceptionMapper;
+import picocli.CommandLine.ParseResult;
 
 import java.sql.Connection;
 import java.util.function.Function;
+import java.util.logging.Level;
+import java.util.logging.LogManager;
 
 public class Main {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(Main.class);
 
     public static void main(String[] args) {
+        LogManager.getLogManager().getLogger("").setLevel(Level.WARNING);
+        SLF4JBridgeHandler.install();
+
         LOGGER.info("Application starting");
         DatabaseSetup.initialize();
 
